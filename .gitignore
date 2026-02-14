@@ -1,0 +1,3 @@
+node_modules
+artifacts/wasm/*.wasm
+!artifacts/wasm/.gitkeep
