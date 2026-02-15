@@ -34,12 +34,22 @@ function isInitMessage(value: unknown): value is InitMessage {
 
 let configuredWasmPath: string | null = null;
 
-function resolveWasmPath(): string {
-  if (configuredWasmPath) {
-    return configuredWasmPath;
-  }
+function candidateWasmPaths(): string[] {
+  const candidates = [
+    configuredWasmPath ?? undefined,
+    self.__SAMESHI_WASM_PATH,
+    `${import.meta.env.BASE_URL}wasm/sameshi-engine.wasm`,
+    "/wasm/sameshi-engine.wasm",
+    "wasm/sameshi-engine.wasm",
+  ].filter((value): value is string => typeof value === "string" && value.length > 0);
 
-  return self.__SAMESHI_WASM_PATH ?? `${import.meta.env.BASE_URL}wasm/sameshi-engine.wasm`;
+  const unique: string[] = [];
+  for (const candidate of candidates) {
+    if (!unique.includes(candidate)) {
+      unique.push(candidate);
+    }
+  }
+  return unique;
 }
 
 const pendingMessages: EngineWorkerMessage[] = [];
@@ -96,15 +106,35 @@ function startBootstrap(): void {
   }
 
   bootPromise = bootstrap().catch((error) => {
-    reportBootstrapError(resolveWasmPath(), error);
+    reportBootstrapError(candidateWasmPaths()[0] ?? "unknown", error);
   });
 }
 
 async function bootstrap(): Promise<void> {
-  const wasmPath = resolveWasmPath();
-  console.info("[engine-worker] booting", { wasmPath });
+  const paths = candidateWasmPaths();
+  console.info("[engine-worker] booting", { wasmPaths: paths });
 
-  const adapter = await createEngineAdapter({ wasmPath });
+  let adapter: Awaited<ReturnType<typeof createEngineAdapter>> | null = null;
+  const loadErrors: string[] = [];
+  let loadedPath = "unknown";
+
+  for (const wasmPath of paths) {
+    try {
+      adapter = await createEngineAdapter({ wasmPath });
+      loadedPath = wasmPath;
+      console.info("[engine-worker] booted", { wasmPath });
+      break;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      loadErrors.push(`${wasmPath}: ${message}`);
+      console.warn("[engine-worker] failed wasm candidate", { wasmPath, error: message });
+    }
+  }
+
+  if (!adapter) {
+    throw new Error(`Unable to load WASM. Tried: ${loadErrors.join(" | ")}`);
+  }
+
   const handleMessage = createWorkerMessageHandler(adapter, (response) => self.postMessage(response));
 
   self.removeEventListener("message", queueListener);
