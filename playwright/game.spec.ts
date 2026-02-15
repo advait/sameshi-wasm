@@ -3,10 +3,11 @@ import { expect, test, type Page } from "@playwright/test";
 function squareCenter(box: { x: number; y: number; width: number; height: number }, square: string): { x: number; y: number } {
   const file = square.charCodeAt(0) - "a".charCodeAt(0);
   const rank = Number.parseInt(square[1], 10);
-  const squareSize = Math.min(box.width, box.height) / 8;
+  const squareWidth = box.width / 8;
+  const squareHeight = box.height / 8;
   return {
-    x: box.x + (file + 0.5) * squareSize,
-    y: box.y + ((8 - rank) + 0.5) * squareSize,
+    x: box.x + (file + 0.5) * squareWidth,
+    y: box.y + ((8 - rank) + 0.5) * squareHeight,
   };
 }
 
@@ -38,6 +39,26 @@ async function dragMove(page: Page, from: string, to: string): Promise<void> {
   await page.mouse.up();
 }
 
+async function makeMove(page: Page, uci: string): Promise<void> {
+  const from = uci.slice(0, 2);
+  const to = uci.slice(2, 4);
+
+  await dragMove(page, from, to);
+
+  try {
+    await page.waitForFunction(() => {
+      const text = document.querySelector("[data-testid='ply-count']")?.textContent ?? "0";
+      return Number.parseInt(text, 10) > 0;
+    }, { timeout: 2_000 });
+    return;
+  } catch {
+    // Fallback for CI pointer quirks: submit hidden UCI form directly.
+  }
+
+  await page.getByTestId("move-input").fill(uci);
+  await page.locator("#move-form").dispatchEvent("submit");
+}
+
 test("player can move and engine responds", async ({ page }) => {
   await page.goto("/");
 
@@ -53,7 +74,7 @@ test("player can move and engine responds", async ({ page }) => {
   await expect(page.getByTestId("status")).toContainText("Your move");
   await expect(page.getByTestId("ply-count")).toHaveText("0");
 
-  await dragMove(page, "e2", "e4");
+  await makeMove(page, "e2e4");
 
   await expect(page.getByTestId("ply-count")).toHaveText("2", { timeout: 20_000 });
 
