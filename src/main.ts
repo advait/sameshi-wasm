@@ -83,7 +83,9 @@ let disposed = false;
 let engineBootError: string | null = null;
 let inFlightSearch: AbortController | null = null;
 
+const wasmPath = `${import.meta.env.BASE_URL}wasm/sameshi-engine.wasm`;
 const worker = new Worker(new URL("./engine/engine-worker.ts", import.meta.url), { type: "module" });
+worker.postMessage({ type: "init", wasmPath });
 const engine = new WorkerEngineClient(worker);
 
 const ground = Chessground(boardElement, {
@@ -353,6 +355,24 @@ worker.addEventListener("error", (event) => {
 worker.addEventListener("messageerror", () => {
   engineBootError = "Worker message decode error";
   setFeedback("Engine worker sent an unreadable message.");
+  syncBoard();
+});
+
+worker.addEventListener("message", (event) => {
+  const data = event.data as {
+    type?: string;
+    error?: string;
+    wasmPath?: string;
+  };
+
+  if (data?.type !== "bootstrap-error") {
+    return;
+  }
+
+  engineReady = false;
+  engineBootError = data.error ?? "worker bootstrap error";
+  const wasmPathUsed = data.wasmPath ?? "unknown";
+  setFeedback(`Engine bootstrap failed at ${wasmPathUsed}: ${engineBootError}`);
   syncBoard();
 });
 
