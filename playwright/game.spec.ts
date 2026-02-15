@@ -1,19 +1,30 @@
 import { expect, test, type Page } from "@playwright/test";
 
-async function clickSquare(page: Page, square: string): Promise<void> {
-  const board = page.getByTestId("board");
+function squareCenter(box: { x: number; y: number; width: number; height: number }, square: string): { x: number; y: number } {
+  const file = square.charCodeAt(0) - "a".charCodeAt(0);
+  const rank = Number.parseInt(square[1], 10);
+  const squareSize = Math.min(box.width, box.height) / 8;
+  return {
+    x: box.x + (file + 0.5) * squareSize,
+    y: box.y + ((8 - rank) + 0.5) * squareSize,
+  };
+}
+
+async function dragMove(page: Page, from: string, to: string): Promise<void> {
+  const board = page.locator("[data-testid='board'] .cg-board");
+  await expect(board).toBeVisible();
   const box = await board.boundingBox();
   if (!box) {
     throw new Error("Board is not visible");
   }
 
-  const file = square.charCodeAt(0) - "a".charCodeAt(0);
-  const rank = Number.parseInt(square[1], 10);
-  const squareSize = box.width / 8;
-  const x = box.x + (file + 0.5) * squareSize;
-  const y = box.y + ((8 - rank) + 0.5) * squareSize;
+  const start = squareCenter(box, from);
+  const end = squareCenter(box, to);
 
-  await page.mouse.click(x, y);
+  await page.mouse.move(start.x, start.y);
+  await page.mouse.down();
+  await page.mouse.move(end.x, end.y, { steps: 12 });
+  await page.mouse.up();
 }
 
 test("player can move and engine responds", async ({ page }) => {
@@ -31,8 +42,7 @@ test("player can move and engine responds", async ({ page }) => {
   await expect(page.getByTestId("status")).toContainText("Your move");
   await expect(page.getByTestId("ply-count")).toHaveText("0");
 
-  await clickSquare(page, "e2");
-  await clickSquare(page, "e4");
+  await dragMove(page, "e2", "e4");
 
   await expect(page.getByTestId("ply-count")).toHaveText("2", { timeout: 20_000 });
 
