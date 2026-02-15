@@ -5,10 +5,13 @@ on:
     branches:
       - "**"
   pull_request:
+  workflow_dispatch:
 
 jobs:
   test:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     steps:
       - name: Checkout
@@ -19,6 +22,9 @@ jobs:
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
 
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
       - name: Setup Emscripten
         uses: mymindstorm/setup-emsdk@v14
         with:
@@ -28,5 +34,59 @@ jobs:
         run: |
           make -C upstream wasm EMSDK_ROOT="${EMSDK}"
 
-      - name: Run tests
-        run: bun test
+      - name: Run Bun tests
+        run: bun run test
+
+      - name: Install Playwright browsers
+        run: bunx playwright install --with-deps chromium
+
+      - name: Run Playwright tests
+        run: bun run test:e2e
+
+  deploy:
+    if: github.event_name == 'push' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Setup Emscripten
+        uses: mymindstorm/setup-emsdk@v14
+        with:
+          version: latest
+
+      - name: Build WASM
+        run: |
+          make -C upstream wasm EMSDK_ROOT="${EMSDK}"
+
+      - name: Build web app
+        run: bun run build
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload GitHub Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+      - id: deployment
+        name: Deploy GitHub Pages
+        uses: actions/deploy-pages@v4

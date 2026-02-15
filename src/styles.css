@@ -1,0 +1,206 @@
+:root {
+  --ink: #132127;
+  --muted: #374f59;
+  --panel: rgba(252, 247, 231, 0.88);
+  --panel-strong: #f8f1da;
+  --border: #8fa5ae;
+  --accent: #0d5f7b;
+  --accent-ink: #e6f4f9;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: "Avenir Next", "Trebuchet MS", "Gill Sans", sans-serif;
+  color: var(--ink);
+  background:
+    radial-gradient(circle at 8% 12%, rgba(211, 135, 52, 0.25), transparent 30%),
+    radial-gradient(circle at 84% 18%, rgba(29, 122, 158, 0.25), transparent 28%),
+    linear-gradient(160deg, #f4ebd0, #c3d8d2 52%, #d1e0ef);
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image: linear-gradient(45deg, rgba(13, 95, 123, 0.03) 25%, transparent 25%, transparent 50%, rgba(13, 95, 123, 0.03) 50%, rgba(13, 95, 123, 0.03) 75%, transparent 75%, transparent);
+  background-size: 28px 28px;
+}
+
+#app {
+  position: relative;
+  z-index: 1;
+}
+
+.app-shell {
+  width: min(1120px, 95vw);
+  margin: 2.2rem auto;
+  display: grid;
+  grid-template-columns: minmax(320px, 1fr) minmax(300px, 420px);
+  gap: 1.4rem;
+}
+
+.board-panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 1rem;
+  box-shadow: 0 12px 34px rgba(19, 33, 39, 0.22);
+}
+
+.board-frame {
+  width: min(100%, 640px);
+  margin: 0 auto;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 2px solid rgba(19, 33, 39, 0.16);
+}
+
+#board {
+  width: 100%;
+}
+
+.status {
+  margin: 1rem 0 0.35rem;
+  font-size: 1.06rem;
+  font-weight: 700;
+}
+
+.feedback {
+  margin: 0;
+  min-height: 1.4rem;
+  color: var(--muted);
+}
+
+.control-panel {
+  background: var(--panel-strong);
+  border: 1px solid rgba(39, 61, 71, 0.24);
+  border-radius: 18px;
+  padding: 1.1rem 1.15rem;
+  box-shadow: 0 12px 34px rgba(19, 33, 39, 0.14);
+}
+
+.control-panel h1 {
+  margin: 0;
+  font-size: 1.8rem;
+  letter-spacing: 0.01em;
+}
+
+.subhead {
+  margin: 0.3rem 0 1rem;
+  color: #30444d;
+}
+
+.move-form label {
+  display: block;
+  font-size: 0.86rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #2e434b;
+  margin-bottom: 0.38rem;
+}
+
+.move-form-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.move-form-row input {
+  flex: 1;
+  min-width: 0;
+  font-family: "IBM Plex Mono", "Consolas", monospace;
+  font-size: 1rem;
+  border: 1px solid #6a848f;
+  border-radius: 10px;
+  padding: 0.52rem 0.64rem;
+  background: rgba(255, 255, 255, 0.86);
+}
+
+button {
+  border: 1px solid rgba(11, 51, 64, 0.38);
+  border-radius: 10px;
+  padding: 0.52rem 0.74rem;
+  font-size: 0.94rem;
+  font-weight: 700;
+  cursor: pointer;
+  color: var(--accent-ink);
+  background: linear-gradient(160deg, #0d5f7b, #114e64);
+  transition: transform 120ms ease, filter 120ms ease;
+}
+
+button:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.06);
+}
+
+button:active {
+  transform: translateY(0);
+}
+
+.actions {
+  margin-top: 0.65rem;
+}
+
+.meta-grid {
+  margin-top: 1rem;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.86rem;
+}
+
+.meta-grid h2,
+.history h2 {
+  margin: 0 0 0.24rem;
+  font-size: 0.94rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #263a42;
+}
+
+#ply-count {
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+
+#fen {
+  margin: 0;
+  word-break: break-all;
+  font-family: "IBM Plex Mono", "Consolas", monospace;
+  font-size: 0.85rem;
+  color: #1e3138;
+}
+
+.history {
+  margin-top: 1rem;
+}
+
+#ply-history {
+  margin: 0;
+  padding: 0 0 0 1.2rem;
+  max-height: 256px;
+  overflow: auto;
+  font-family: "IBM Plex Mono", "Consolas", monospace;
+}
+
+#ply-history li {
+  margin: 0.08rem 0;
+}
+
+@media (max-width: 900px) {
+  .app-shell {
+    width: min(640px, 95vw);
+    margin: 1rem auto 1.6rem;
+    grid-template-columns: 1fr;
+  }
+
+  .board-panel,
+  .control-panel {
+    border-radius: 14px;
+  }
+}

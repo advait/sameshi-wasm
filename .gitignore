@@ -1,3 +1,9 @@
 node_modules
 artifacts/wasm/*.wasm
 !artifacts/wasm/.gitkeep
+public/wasm/*.wasm
+!public/wasm/.gitkeep
+dist
+playwright-report
+test-results
+.playwright

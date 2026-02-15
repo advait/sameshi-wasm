@@ -6,7 +6,7 @@ declare const self: DedicatedWorkerGlobalScope & {
 };
 
 async function bootstrap(): Promise<void> {
-  const wasmPath = self.__SAMESHI_WASM_PATH ?? new URL("../../artifacts/wasm/sameshi-engine.wasm", import.meta.url);
+  const wasmPath = self.__SAMESHI_WASM_PATH ?? new URL("../wasm/sameshi-engine.wasm", self.location.href);
   const adapter = await createEngineAdapter({ wasmPath });
   attachWorkerRuntime(self, adapter);
 }
