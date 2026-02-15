@@ -14,11 +14,16 @@ async function dragMove(page: Page, from: string, to: string): Promise<void> {
   const boardSurface = page.locator("[data-testid='board'] cg-board").first();
   const boardContainer = page.getByTestId("board");
 
-  await expect(boardContainer).toBeVisible();
-
-  let box = await boardSurface.boundingBox();
-  if (!box) {
-    box = await boardContainer.boundingBox();
+  let box: { x: number; y: number; width: number; height: number } | null = null;
+  for (let attempt = 0; attempt < 50; attempt += 1) {
+    box = await boardSurface.boundingBox();
+    if (!box) {
+      box = await boardContainer.boundingBox();
+    }
+    if (box && box.width > 16 && box.height > 16) {
+      break;
+    }
+    await page.waitForTimeout(200);
   }
   if (!box) {
     throw new Error("Board is not visible");
