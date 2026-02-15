@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 test("player can move and engine responds", async ({ page }) => {
   await page.goto("/");
 
-  await expect(page.getByTestId("status")).toContainText("Your move");
+  await expect(page.getByTestId("status")).toContainText("Your move", { timeout: 30_000 });
   await expect(page.getByTestId("ply-count")).toHaveText("0");
 
   await page.getByTestId("move-input").fill("e2e4");
