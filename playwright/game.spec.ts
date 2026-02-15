@@ -11,9 +11,15 @@ function squareCenter(box: { x: number; y: number; width: number; height: number
 }
 
 async function dragMove(page: Page, from: string, to: string): Promise<void> {
-  const board = page.locator("[data-testid='board'] .cg-board");
-  await expect(board).toBeVisible();
-  const box = await board.boundingBox();
+  const boardSurface = page.locator("[data-testid='board'] cg-board").first();
+  const boardContainer = page.getByTestId("board");
+
+  await expect(boardContainer).toBeVisible();
+
+  let box = await boardSurface.boundingBox();
+  if (!box) {
+    box = await boardContainer.boundingBox();
+  }
   if (!box) {
     throw new Error("Board is not visible");
   }
