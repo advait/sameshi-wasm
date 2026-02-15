@@ -105,6 +105,10 @@ body::before {
   margin-bottom: 0.38rem;
 }
 
+.move-form-hidden {
+  display: none;
+}
+
 .move-form-row {
   display: flex;
   gap: 0.5rem;

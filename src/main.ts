@@ -29,7 +29,7 @@ appRoot.innerHTML = `
     <section class="control-panel">
       <h1>Sameshi WASM</h1>
       <p class="subhead">Human plays White. Engine plays Black.</p>
-      <form id="move-form" class="move-form">
+      <form id="move-form" class="move-form move-form-hidden">
         <label for="move-input">Move (UCI)</label>
         <div class="move-form-row">
           <input id="move-input" data-testid="move-input" autocomplete="off" spellcheck="false" placeholder="e2e4" />
@@ -92,15 +92,22 @@ const engine = new WorkerEngineClient(worker);
 const ground = Chessground(boardElement, {
   orientation: "white",
   fen: game.fen(),
+  turnColor: "white",
   movable: {
     free: false,
     color: "white",
-    dests: buildDests(),
+    dests: new Map<Key, Key[]>(),
     events: {
       after: (orig, dest) => {
         void handleHumanMove(orig, dest);
       },
     },
+  },
+  draggable: {
+    enabled: false,
+  },
+  selectable: {
+    enabled: false,
   },
 });
 
@@ -224,8 +231,14 @@ function syncBoard(): void {
     lastMove,
     movable: {
       free: false,
-      color: humanCanPlay ? "white" : undefined,
+      color: "white",
       dests: humanCanPlay ? buildDests() : new Map<Key, Key[]>(),
+    },
+    draggable: {
+      enabled: humanCanPlay,
+    },
+    selectable: {
+      enabled: humanCanPlay,
     },
   });
 
