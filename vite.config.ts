@@ -1,7 +1,6 @@
 import { defineConfig } from "vite";
 
-const repository = process.env.GITHUB_REPOSITORY?.split("/")[1];
-const base = process.env.GITHUB_ACTIONS && repository ? `/${repository}/` : "/";
+const base = process.env.VITE_BASE_PATH ?? "/";
 
 export default defineConfig({
   base,

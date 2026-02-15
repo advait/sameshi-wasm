@@ -77,6 +77,8 @@ jobs:
           make -C upstream wasm EMSDK_ROOT="${EMSDK}"
 
       - name: Build web app
+        env:
+          VITE_BASE_PATH: /${{ github.event.repository.name }}/
         run: bun run build
 
       - name: Configure GitHub Pages
