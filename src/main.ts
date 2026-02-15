@@ -80,6 +80,7 @@ let lastMove: [Key, Key] | undefined;
 let engineReady = false;
 let engineThinking = false;
 let disposed = false;
+let engineBootError: string | null = null;
 let inFlightSearch: AbortController | null = null;
 
 const worker = new Worker(new URL("./engine/engine-worker.ts", import.meta.url), { type: "module" });
@@ -145,6 +146,10 @@ function canHumanMove(): boolean {
 }
 
 function gameStatus(): string {
+  if (engineBootError) {
+    return "Engine failed to boot.";
+  }
+
   if (!engineReady) {
     return "Booting engine...";
   }
@@ -339,22 +344,28 @@ newGameButton.addEventListener("click", () => {
 
 worker.addEventListener("error", (event) => {
   engineReady = false;
+  engineBootError = event.message || "Worker crashed";
   const message = event.message || "Worker crashed";
   setFeedback(`Engine worker error: ${message}`);
   syncBoard();
 });
 
 worker.addEventListener("messageerror", () => {
+  engineBootError = "Worker message decode error";
   setFeedback("Engine worker sent an unreadable message.");
+  syncBoard();
 });
 
 async function bootEngine(): Promise<void> {
+  engineBootError = null;
   try {
     await engine.setPosition(game.fen());
     engineReady = true;
+    engineBootError = null;
     setFeedback("Engine ready.");
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown startup failure";
+    engineBootError = message;
     setFeedback(`Engine failed to start: ${message}`);
   } finally {
     syncBoard();
