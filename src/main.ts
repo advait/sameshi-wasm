@@ -10,6 +10,7 @@ import "chessground/assets/chessground.cburnett.css";
 import "./styles.css";
 
 const ENGINE_DEPTH = 3;
+const STANDARD_LITE_START_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w - - 0 1";
 
 const appRoot = document.querySelector<HTMLDivElement>("#app");
 if (!appRoot) {
@@ -74,7 +75,7 @@ const moveInput = requiredElement<HTMLInputElement>("move-input");
 const moveForm = requiredElement<HTMLFormElement>("move-form");
 const newGameButton = requiredElement<HTMLButtonElement>("new-game");
 
-const game = new Chess();
+const game = new Chess(STANDARD_LITE_START_FEN);
 const playedPlies: string[] = [];
 let lastMove: [Key, Key] | undefined;
 let engineReady = false;
@@ -105,6 +106,21 @@ const ground = Chessground(boardElement, {
 
 function moveToUci(move: Move): string {
   return `${move.from}${move.to}${move.promotion ?? ""}`;
+}
+
+function toStandardLiteFen(fen: string): string {
+  const parts = fen.split(" ");
+  if (parts.length !== 6) {
+    return fen;
+  }
+
+  parts[2] = "-";
+  parts[3] = "-";
+  return parts.join(" ");
+}
+
+function normalizeGameToStandardLite(): void {
+  game.load(toStandardLiteFen(game.fen()));
 }
 
 function parseUciMove(uci: string): { from: Square; to: Square; promotion?: "q" | "r" | "b" | "n" } | null {
@@ -228,6 +244,7 @@ async function playHumanMove(from: Square, to: Square, promotion: "q" | "r" | "b
 
   try {
     const move = game.move({ from, to, promotion });
+    normalizeGameToStandardLite();
     lastMove = [move.from as Key, move.to as Key];
     playedPlies.push(moveToUci(move));
     setFeedback(`You played ${moveToUci(move)}.`);
@@ -255,7 +272,7 @@ async function engineTurn(): Promise<void> {
   inFlightSearch = controller;
 
   try {
-    await engine.setPosition(game.fen(), controller.signal);
+    await engine.setPosition(toStandardLiteFen(game.fen()), controller.signal);
     const best = await engine.bestMove(ENGINE_DEPTH, controller.signal);
     if (controller.signal.aborted || disposed) {
       return;
@@ -276,6 +293,7 @@ async function engineTurn(): Promise<void> {
       to: parsed.to,
       promotion: parsed.promotion ?? "q",
     });
+    normalizeGameToStandardLite();
     lastMove = [move.from as Key, move.to as Key];
     playedPlies.push(moveToUci(move));
     setFeedback(`Engine played ${moveToUci(move)}${best.depth ? ` at depth ${best.depth}` : ""}.`);
@@ -322,7 +340,7 @@ async function resetGame(): Promise<void> {
   inFlightSearch?.abort();
   inFlightSearch = null;
   engineThinking = false;
-  game.reset();
+  game.load(STANDARD_LITE_START_FEN);
   playedPlies.length = 0;
   lastMove = undefined;
   moveInput.value = "";
@@ -330,7 +348,7 @@ async function resetGame(): Promise<void> {
 
   if (engineReady) {
     try {
-      await engine.setPosition(game.fen());
+      await engine.setPosition(toStandardLiteFen(game.fen()));
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unable to reset engine state";
       setFeedback(`Engine error: ${message}`);
@@ -379,7 +397,7 @@ worker.addEventListener("message", (event) => {
 async function bootEngine(): Promise<void> {
   engineBootError = null;
   try {
-    await engine.setPosition(game.fen());
+    await engine.setPosition(toStandardLiteFen(game.fen()));
     engineReady = true;
     engineBootError = null;
     setFeedback("Engine ready.");
