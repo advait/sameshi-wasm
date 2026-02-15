@@ -1,0 +1,3 @@
+[submodule "upstream/sameshi"]
+	path = upstream/sameshi
+	url = https://github.com/datavorous/sameshi

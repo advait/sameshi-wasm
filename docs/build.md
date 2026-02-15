@@ -12,12 +12,14 @@ cd /tmp/emsdk
 Build WASM artifact:
 
 ```bash
-source /tmp/emsdk/emsdk_env.sh
 make -C upstream wasm \
   WASM_OUT_DIR=../artifacts/wasm \
   WASM_BASENAME=sameshi-engine \
   SOURCE_DATE_EPOCH=1704067200
 ```
+
+`upstream/Makefile` will use `emcc` from `PATH` when available, or fall back to
+`$EMSDK_ROOT/emsdk_env.sh` (default `/tmp/emsdk/emsdk_env.sh`).
 
 Or use project helper:
 
