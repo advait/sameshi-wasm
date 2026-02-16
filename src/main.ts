@@ -9,7 +9,7 @@ import "chessground/assets/chessground.brown.css";
 import "chessground/assets/chessground.cburnett.css";
 import "./styles.css";
 
-const ENGINE_DEPTH = 3;
+const ENGINE_DEPTH = 6;
 const STANDARD_LITE_START_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w - - 0 1";
 
 const appRoot = document.querySelector<HTMLDivElement>("#app");
